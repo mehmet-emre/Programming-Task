@@ -10,4 +10,4 @@ My AWS S3 credentials:
   secret_key: 67KMszx2gZx9+9ANVpRhXJtHER1LiaD/qpMXQLIy
 
 Sample SoundCloud username with a downloadable song:
-  emre-tetik
+  emre_tetik
