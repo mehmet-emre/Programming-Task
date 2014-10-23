@@ -81,6 +81,7 @@ public class SoundCloudAPI {
 	        while ((count = in.read(data, 0, 1024)) != -1) {
 	            fout.write(data, 0, count);
 	        }
+	        
 	    } finally {
 	        if (in != null) {
 	            in.close();
