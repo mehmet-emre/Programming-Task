@@ -1,5 +1,8 @@
 package programmingTask;
 
+import static programmingTask.Constants.AWS_BUCKET_NAME;
+import static programmingTask.Constants.SC_FILE_NAME;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -22,9 +25,9 @@ public class AWSJavaAPI {
 	
 	public void uploadFile(String keyName) throws IOException {
 
-        File file = new File(Constants.SC_FILE_NAME);
+        File file = new File(SC_FILE_NAME);
         s3Client.putObject(new PutObjectRequest(
-        		Constants.AWS_BUCKET_NAME, keyName, file));
+        		AWS_BUCKET_NAME, keyName, file));
 
     }
 }

@@ -1,5 +1,13 @@
 package programmingTask;
 
+import static programmingTask.Constants.SC_CLIENT_ID;
+import static programmingTask.Constants.SC_CLIENT_SECRET_ID;
+import static programmingTask.Constants.SC_FILE_NAME;
+import static programmingTask.Constants.SC_LOGIN_PASSWORD;
+import static programmingTask.Constants.SC_LOGIN_USERNAME;
+import static programmingTask.Constants.SC_REDIRECT_URI_STRING;
+import static programmingTask.Constants.SC_TOKEN_STRING;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.FileOutputStream;
@@ -8,8 +16,6 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-
 import org.apache.http.HttpResponse;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -23,15 +29,12 @@ import com.soundcloud.api.Token;
 public class SoundCloudAPI {
 	
 	private ApiWrapper wrapper;
-	private ArrayList<Track> trackArray;
+	private JSONArray trackList;
 	
-	public ArrayList<Track> getTrackArray() {
-		return trackArray;
+	public JSONArray getTrackList() {
+		return trackList;
 	}
 
-	public void setTrackArray(ArrayList<Track> trackArray) {
-		this.trackArray = trackArray;
-	}
 
 	public SoundCloudAPI(){
 		super();
@@ -39,9 +42,9 @@ public class SoundCloudAPI {
 	
 	public void getTheTrackList(String username) throws URISyntaxException, IOException, JSONException  {
 
-		wrapper = new ApiWrapper(Constants.SC_CLIENT_ID, Constants.SC_CLIENT_SECRET_ID, 
-				new URI(Constants.SC_REDIRECT_URI_STRING), new Token(Constants.SC_TOKEN_STRING, null));
-		wrapper.login(Constants.SC_LOGIN_USERNAME, Constants.SC_LOGIN_PASSWORD);
+		wrapper = new ApiWrapper(SC_CLIENT_ID, SC_CLIENT_SECRET_ID, 
+				new URI(SC_REDIRECT_URI_STRING), new Token(SC_TOKEN_STRING, null));
+		wrapper.login(SC_LOGIN_USERNAME, SC_LOGIN_PASSWORD);
 
 		HttpResponse response = wrapper.get(Request.to("/users/"+username+"/tracks"));
 		BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
@@ -51,25 +54,7 @@ public class SoundCloudAPI {
 		}
 		
 		JSONTokener tokener = new JSONTokener(builder.toString());
-		JSONArray trackList = new JSONArray(tokener);
-		trackArray = new ArrayList<Track>();
-		int i = 0;
-		while(true){
-			JSONObject jsonObj;
-			try
-			{
-				jsonObj = trackList.getJSONObject(i);
-				Track track = new Track(jsonObj.getString("title"),jsonObj.getString("id"), jsonObj.getBoolean("downloadable"),"", "");
-				if(track.isDownloadable())
-					track.setDownloadUrl(jsonObj.getString("download_url"));
-				trackArray.add(track);
-				
-			}catch(JSONException e){
-				e.getMessage();
-				break;
-			}		
-			i++;
-		}			
+		trackList = new JSONArray(tokener);		
 	}
 
 	public void downloadTrack(String download_url) throws IOException, JSONException{
@@ -89,7 +74,7 @@ public class SoundCloudAPI {
 	    FileOutputStream fout = null;
 	    try {
 	        in = new BufferedInputStream(new URL(location).openStream());
-	        fout = new FileOutputStream(Constants.SC_FILE_NAME);
+	        fout = new FileOutputStream(SC_FILE_NAME);
 	
 	        final byte data[] = new byte[1024];
 	        int count;

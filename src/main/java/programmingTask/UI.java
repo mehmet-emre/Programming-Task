@@ -1,26 +1,27 @@
 package programmingTask;
 
-import java.awt.EventQueue;
+import static java.awt.EventQueue.invokeLater;
+import static javax.swing.SwingConstants.RIGHT;
+import static programmingTask.Constants.SC_FILE_NAME;
+import static programmingTask.Constants.loadProperties;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-
+import java.io.IOException;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
+@SuppressWarnings("serial")
 public class UI extends JFrame implements ActionListener{
-	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -4473477809534699119L;
 	
 	private SoundCloudAPI soundCloudAPI = new SoundCloudAPI();
 	private AWSJavaAPI	awsJavaAPI = new AWSJavaAPI();
@@ -36,7 +37,12 @@ public class UI extends JFrame implements ActionListener{
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
+		try {
+			loadProperties();
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
+		invokeLater(new Runnable() {
 			public void run() {
 				try {
 					UI frame = new UI();
@@ -49,10 +55,10 @@ public class UI extends JFrame implements ActionListener{
 	}
 
 	/**
-	 * Create the frame.
+	 * Create the frame: Auto-generated code by WindowBuilder editor
 	 */
 	public UI() {
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setBounds(100, 100, 569, 415);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -60,7 +66,7 @@ public class UI extends JFrame implements ActionListener{
 		contentPane.setLayout(null);
 		
 		JLabel lblNewLabel = new JLabel("AWS Client - Access Key");
-		lblNewLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+		lblNewLabel.setHorizontalAlignment(RIGHT);
 		lblNewLabel.setBounds(10, 5, 207, 14);
 		contentPane.add(lblNewLabel);
 		
@@ -70,7 +76,7 @@ public class UI extends JFrame implements ActionListener{
 		txtAccessKey.setColumns(10);
 		
 		JLabel lblNewLabel_1 = new JLabel("AWS Client - Secret Access Key");
-		lblNewLabel_1.setHorizontalAlignment(SwingConstants.RIGHT);
+		lblNewLabel_1.setHorizontalAlignment(RIGHT);
 		lblNewLabel_1.setBounds(10, 36, 207, 14);
 		contentPane.add(lblNewLabel_1);
 		
@@ -80,7 +86,7 @@ public class UI extends JFrame implements ActionListener{
 		txtSecretAccessKey.setColumns(10);
 		
 		JLabel lblNewLabel_2 = new JLabel("SoundCloud Username");
-		lblNewLabel_2.setHorizontalAlignment(SwingConstants.RIGHT);
+		lblNewLabel_2.setHorizontalAlignment(RIGHT);
 		lblNewLabel_2.setBounds(10, 98, 207, 14);
 		contentPane.add(lblNewLabel_2);
 		
@@ -112,12 +118,16 @@ public class UI extends JFrame implements ActionListener{
 	public void actionPerformed(ActionEvent e) {
 		try {		
 			if(e.getActionCommand().equals("Copy to S3")){
-				int index = Integer.parseInt(((JButton)e.getSource()).getToolTipText());			
-				soundCloudAPI.downloadTrack(soundCloudAPI.getTrackArray().get(index).getDownloadUrl());
+				int index = Integer.parseInt(((JButton)e.getSource()).getToolTipText());	
+				JSONArray trackList = soundCloudAPI.getTrackList();
+				JSONObject jsonObj = trackList.getJSONObject(index);
+				String downloadUrl = jsonObj.getString("download_url");
+				String keyName = jsonObj.getString("id");
+				soundCloudAPI.downloadTrack(downloadUrl);
 				awsJavaAPI.checkCredentials(txtAccessKey.getText(), txtSecretAccessKey.getText());
-				awsJavaAPI.uploadFile(soundCloudAPI.getTrackArray().get(index).getId());
+				awsJavaAPI.uploadFile(keyName);
 				lblNotification.setText("Track file is successfully copied to S3");
-				File file = new File(Constants.SC_FILE_NAME);
+				File file = new File(SC_FILE_NAME);
 				file.delete();
 				lblNotification.setText("Track has been copied to S3");
 			}
@@ -131,7 +141,6 @@ public class UI extends JFrame implements ActionListener{
 				lblNotification.setText("Track List has been retrieved");
 			}
 		} catch (Exception ex) {
-			// TODO Auto-generated catch block
 			ex.printStackTrace();
 			lblNotification.setText(ex.getMessage());
 		}
@@ -140,18 +149,21 @@ public class UI extends JFrame implements ActionListener{
 	
 	public void publishResults() throws JSONException{
 		pnlTracks.removeAll();
-		for(int i=0; i<soundCloudAPI.getTrackArray().size(); i++){
-			JLabel label = new JLabel(soundCloudAPI.getTrackArray().get(i).getTitle());
+		JSONArray trackList = soundCloudAPI.getTrackList();
+		for(int i=0; i<trackList.length(); i++){
+			JSONObject jsonObj = trackList.getJSONObject(i);
+			JLabel label = new JLabel(jsonObj.getString("title"));
 			label.setBounds(5, 25*i + 5, 400, 25);
 			pnlTracks.add(label);
 			JButton btnDownload = new JButton("Copy to S3");
 			btnDownload.setToolTipText(String.valueOf(i));
 			btnDownload.addActionListener(this);
 			btnDownload.setBounds(405, 25*i + 5, 100, 25);
-			btnDownload.setEnabled(soundCloudAPI.getTrackArray().get(i).isDownloadable()?true:false);
+			btnDownload.setEnabled(jsonObj.getBoolean("downloadable")?true:false);
 			pnlTracks.add(btnDownload);
 		}
-		pnlTracks.setSize(605, 300);
+		pnlTracks.setSize(605, trackList.length()*25 + 30);
+		pnlTracks.repaint();
 	}
 
 	
