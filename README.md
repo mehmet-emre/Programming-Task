@@ -11,3 +11,6 @@ My AWS S3 credentials:
 
 Sample SoundCloud username with a downloadable song:
   emre_tetik
+  
+Bucket name: bucketforprogrammingtask
+Bucket place: us-west-2 ireland
